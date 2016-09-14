@@ -1,0 +1,6 @@
+db_server="127.0.0.1"
+db_user="root"
+db_pass="root"
+db_name="j4ck"
+all_targets_table_name="targets"
+all_urls_table_name="urls"
