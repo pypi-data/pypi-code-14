@@ -1,0 +1,138 @@
+import os.path
+
+"""
+"""
+VERSION = "0.1.1"
+
+"""
+Verbosity level.
+
+0 = Print nothing (default)
+1 = Print errors and start-finish messages
+2 = Print debug messages
+
+"""
+VERBOSITY_LEVEL = 0
+
+"""
+Error printing
+"""
+PRINT_TEST_ERROR_DETAIL = False
+
+"""
+Base directory of config.
+"""
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+"""
+Possible values:
+    'tcxml',
+    'plain'
+"""
+OUTPUT_TYPE = 'tcxml'
+
+"""
+Possible values:
+    'pos',
+    'gloss',
+    'all'
+"""
+TAG_LEVEL = 'all'
+
+"""
+Possible values:
+    1-n
+"""
+NUMBER_OF_PASSES = 1
+
+"""
+Possible values:
+"""
+USE_MEMORY_DB = False
+
+"""
+"""
+PROBABILITY_COUNT_THRESHOLD = 10
+
+"""
+"""
+REGISTER_EMPTY_POS = True
+
+"""
+"""
+REGISTER_EMPTY_GLOSS = True
+
+
+"""
+"""
+OCCURRENCE_ORDER_OF_MAGNITUDE = 1000
+
+"""
+"""
+ADJUST_FOR_OCCURRENCE = True
+
+"""
+"""
+ADJUST_FOR_IMPORTANCE = True
+
+"""
+TODO
+"""
+SPLIT_GLOSSES = False
+
+"""
+"""
+IGNORE_EMPTY_FROM_CASES = True
+
+"""
+Cases
+"""
+CASE_TYPE_POS_WORD = 1
+CASE_TYPE_POS_WORD_CASE = 1 << 1
+CASE_TYPE_POS_PREFIX_WORD = 1 << 2
+CASE_TYPE_POS_SUFFIX_WORD = 1 << 3
+CASE_TYPE_POS_PREFIX_POS = 1 << 4
+CASE_TYPE_POS_SUFFIX_POS = 1 << 5
+CASE_TYPE_POS_MORPHEME = 1 << 6
+CASE_TYPE_POS_WORD_CONTAINS_CASE = 1 << 7
+
+CASE_TYPE_GLOSS_MORPH = 1 << 8
+CASE_TYPE_GLOSS_PREFIX_GLOSS = 1 << 9
+CASE_TYPE_GLOSS_SUFFIX_GLOSS = 1 << 10
+CASE_TYPE_GLOSS_PREFIX_MORPH = 1 << 11
+CASE_TYPE_GLOSS_SUFFIX_MORPH = 1 << 12
+CASE_TYPE_GLOSS_WORD = 1 << 13
+CASE_TYPE_GLOSS_PREFIX_WORD = 1 << 14
+CASE_TYPE_GLOSS_SUFFIX_WORD = 1 << 15
+CASE_TYPE_GLOSS_PREFIX_POS = 1 << 16
+CASE_TYPE_GLOSS_SUFFIX_POS = 1 << 17
+CASE_TYPE_GLOSS_WORD_CASE = 1 << 18
+CASE_TYPE_GLOSS_WORD_CONTAINS_CASE = 1 << 19
+
+"""
+CASE IMPORTANCE
+"""
+CASE_IMPORTANCE = {
+    CASE_TYPE_POS_WORD: 10,
+    CASE_TYPE_POS_WORD_CASE: 2,
+    CASE_TYPE_POS_PREFIX_WORD: 3,
+    CASE_TYPE_POS_SUFFIX_WORD: 3,
+    CASE_TYPE_POS_PREFIX_POS: 5,
+    CASE_TYPE_POS_SUFFIX_POS: 5,
+    CASE_TYPE_POS_MORPHEME: 8,
+    CASE_TYPE_POS_WORD_CONTAINS_CASE: 1,
+
+    CASE_TYPE_GLOSS_MORPH: 10,
+    CASE_TYPE_GLOSS_PREFIX_GLOSS: 2,
+    CASE_TYPE_GLOSS_SUFFIX_GLOSS: 2,
+    CASE_TYPE_GLOSS_PREFIX_MORPH: 4,
+    CASE_TYPE_GLOSS_SUFFIX_MORPH: 4,
+    CASE_TYPE_GLOSS_WORD: 8,
+    CASE_TYPE_GLOSS_PREFIX_WORD: 4,
+    CASE_TYPE_GLOSS_SUFFIX_WORD: 4,
+    CASE_TYPE_GLOSS_PREFIX_POS: 2,
+    CASE_TYPE_GLOSS_SUFFIX_POS: 2,
+    CASE_TYPE_GLOSS_WORD_CASE: 2,
+    CASE_TYPE_GLOSS_WORD_CONTAINS_CASE: 1
+}
+
