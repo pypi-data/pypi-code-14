@@ -1,0 +1,17 @@
+# -*- coding:utf-8 -*-
+
+# ANTI_REDIS_CONF = {'host': '127.0.0.1'}
+# ANTI_BALANCER = ('127.0.0.1', 9090)
+DEBUG = True
+
+ANTI_REDIS_CONF = {'host': '185.87.51.80', 'password': 'bHlSJLPh0hSKcjr7Zmuh'}
+ANTI_BALANCER = ('185.87.51.80', 9090)
+KEY_ANTIGATE = '2f18ec2502bfea30a538bc659fb42598'
+ANTI_SQLALCHEMY_DATABASE_URI = 'postgresql://pos:ncTgZqOV47@94.79.54.219:5432/pos'
+TIMEOUT = 60
+
+# Yandex settings
+YANDEX_USER = 'avro7777'
+YANDEX_PASSWD = 'b67d0ee47e'
+YANDEX_CLIENT_SECRET = '403779a4409144feba99f5e148cbaa9f'
+YANDEX_CLIENT_ID = '9e9c18109e014bb8b24f23f702cf4181'
