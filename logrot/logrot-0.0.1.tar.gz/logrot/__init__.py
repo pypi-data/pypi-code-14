@@ -1,0 +1,1 @@
+from logrot import *
