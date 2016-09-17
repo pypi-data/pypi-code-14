@@ -1,0 +1,1 @@
+from pyblog.engine import Blog
