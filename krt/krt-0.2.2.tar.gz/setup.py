@@ -1,0 +1,26 @@
+from distutils.core import setup
+
+with open('LICENCE.txt') as s:
+    l = s.read()
+
+with open('README.rst') as ss:
+    d = ss.read()
+
+setup(
+    name = 'krt',
+    packages = ['krt'], 
+    version = '0.2.2',
+    description = 'Simple, small, interactive, console-based debugger.',
+    platforms = 'Linux, MacOS, Windows',
+    author = 'Juraj Onuska',
+    author_email = 'jurajonuska@gmail.com',
+    url = 'https://github.com/nthe/krt',
+    download_url = 'https://github.com/nthe/krt/archive/master.zip',
+    keywords = ['python', 'debug', 'debugger', 'debugging', 'console', 'terminal'], 
+    entry_points={
+        'console_scripts': [
+                'krt = krt.krt:run'
+            ]    
+    },
+    classifiers = [],
+)
