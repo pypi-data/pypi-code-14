@@ -1,0 +1,300 @@
+from __future__ import unicode_literals, absolute_import
+import datetime
+import re
+import os
+from contextlib import contextmanager
+import logging
+
+from .browser import Browser, SimpleBrowser, ParseError, Soup
+from .browser import NoSuchElementException, \
+    WebDriverException, \
+    NoSuchWindowException
+from .compat import *
+
+
+logger = logging.getLogger(__name__)
+
+class BaseWishlist(Soup):
+    @property
+    def host(self):
+        return os.environ.get("WISHLIST_HOST", "https://www.amazon.com")
+
+
+
+class WishlistElement(BaseWishlist):
+    """Wishlist.get() returns an instance of this object"""
+    @property
+    def uuid(self):
+        uuid = self.a_uuid
+        if not uuid:
+            uuid = self.external_uuid
+        return uuid
+
+    @property
+    def url(self):
+        url = self.a_url
+        if not url:
+            url = self.external_url
+        return url
+
+    @property
+    def a_uuid(self):
+        """return the amazon uuid of the item"""
+        uuid = ""
+        a_url = self.url
+        if a_url:
+            m = re.search("/dp/([^/]+)", self.url)
+            if m:
+                uuid = m.group(1)
+        else:
+            # go through all the a tags in ItemInfo looking for asin=
+            el = self.soup.find("div", id=re.compile("^itemInfo_"))
+            if el:
+                regex = re.compile("asin\=([^\&]+)")
+                els = el.findAll("a", {"href": regex})
+                for el in els:
+                    m = regex.search(el.attrs["href"])
+                    if m:
+                        uuid = m.group(1).strip()
+                        if uuid: break
+        return uuid
+
+    @property
+    def a_url(self):
+        """return the amazon url of the item"""
+        href = ""
+        # http://stackoverflow.com/questions/5041008/how-to-find-elements-by-class
+        # http://stackoverflow.com/a/5099355/5006
+        # http://stackoverflow.com/a/2832635/5006
+        el = self.soup.find("a", id=re.compile("^itemName_"))
+        if el and ("href" in el.attrs):
+            m = re.search("/dp/([^/]+)", el.attrs["href"])
+            if m:
+                href = "{}/dp/{}/".format(self.host, m.group(1))
+
+        return href
+
+    @property
+    def external_uuid(self):
+        """Return the external uuid of the item"""
+        ext_url = self.external_url
+        return md5(ext_url) if ext_url else ""
+
+    @property
+    def external_url(self):
+        """was this added from an external website? Then this returns that url"""
+        href = ""
+        el = self.soup.find("span", {"class": "clip-text"})
+        if el:
+            el = el.find("a")
+            if el:
+                href = el.attrs.get("href", "")
+        return href
+
+
+    @property
+    def image(self):
+        src = ""
+        imgs = self.soup.find_all("img")
+        for img in imgs:
+            if "src" in img.attrs:
+                if img.parent and img.parent.name == "a":
+                    a = img.parent
+                    if a.attrs["href"].startswith("/dp/"):
+                        src = img.attrs["src"]
+                        break
+
+        if not src:
+            for img in imgs:
+                maybe_src = img.attrs.get("src", "")
+                if "/images/I/" in maybe_src:
+                    src = maybe_src
+                    break
+
+        return src
+
+    @property
+    def price(self):
+        price = 0.0
+        el = self.soup.find("span", id=re.compile("^itemPrice_"))
+        if el and len(el.contents) > 0:
+            try:
+                price_str = el.contents[0].strip()
+                if price_str:
+                    price = float(price_str[1:].split()[0].replace(",", ""))
+            except (ValueError, IndexError):
+                price = 0.0
+
+        return price
+
+    @property
+    def marketplace_price(self):
+        price = 0.0
+        el = self.soup.find("span", {"class": "itemUsedAndNewPrice"})
+        if el and len(el.contents) > 0:
+            price = float(el.contents[0].replace("$", "").replace(",", ""))
+        return price
+
+    @property
+    def title(self):
+        title = ""
+        el = self.soup.find("a", id=re.compile("^itemName_"))
+        if el and len(el.contents) > 0:
+            title = el.contents[0].strip()
+
+        else:
+            el = self.soup.find("span", id=re.compile("^itemName_"))
+            if el and len(el.contents) > 0:
+                title = el.contents[0].strip()
+
+        return title
+
+    @property
+    def comment(self):
+        ret = ""
+        el = self.soup.find("span", id=re.compile("^itemComment_"))
+        if el and len(el.contents) > 0:
+            ret = el.contents[0].strip()
+        return ret
+
+    @property
+    def rating(self):
+        stars = 0.0
+        el = self.soup.find("a", {"class": "reviewStarsPopoverLink"})
+        if el:
+            el = el.find("span", {"class": "a-icon-alt"})
+            if len(el.contents) > 0:
+                stars = float(el.contents[0].strip().split()[0])
+        return stars
+
+    @property
+    def author(self):
+        author = ""
+        el = self.soup.find("a", id=re.compile("^itemName_"))
+        if el:
+            author = el.parent.next_sibling
+            if author:
+                author = author.strip().replace("by ", "")
+        return author
+
+    @property
+    def added(self):
+        ret = None
+        el = self.soup.find("div", id=re.compile("^itemAction_"))
+        el = el.find("span", {"class": "a-size-small"})
+        if el and len(el.contents) > 0:
+            ret = el.contents[0].strip().replace("Added ", "")
+            if ret:
+                ret = datetime.datetime.strptime(ret, '%B %d, %Y')
+        return ret
+
+    @property
+    def body(self):
+        return self.soup.prettify()
+
+    def __init__(self, element):
+        self.soup = self.soupify(element)
+
+    def jsonable(self):
+        json_item = {}
+        json_item["title"] = self.title
+        json_item["image"] = self.image
+        json_item["uuid"] = self.uuid
+        json_item["url"] = self.url
+        json_item["price"] = self.price
+        json_item["marketplace_price"] = self.marketplace_price
+        json_item["comment"] = self.comment
+        json_item["author"] = self.author
+        json_item["added"] = self.added.strftime('%B %d, %Y')
+        json_item["rating"] = self.rating
+        return json_item
+
+
+class Wishlist(BaseWishlist):
+    """Wrapper that is specifically designed for getting amazon wishlists"""
+
+    element_class = WishlistElement
+
+    @contextmanager
+    def open_simple(self):
+        with SimpleBrowser.open() as b:
+            yield b
+
+    @contextmanager
+    def open_full(self):
+        with Browser.open() as b:
+            yield b
+
+    def get_items_from_body(self, body):
+        """this will return the wishlist elements on the current page"""
+        soup = self.soupify(body)
+        html_items = soup.findAll("div", {"id": re.compile("^item_")})
+        for i, html_item in enumerate(html_items):
+            item = self.element_class(html_item)
+            yield item
+
+    def get_total_pages_from_body(self, body):
+        """return the total number of pages of the wishlist
+
+        body -- string -- the complete html page
+        """
+        page = 0
+        soup = self.soupify(body)
+
+        try:
+            #el = soup.find("ul", id=re.compile("^itemAction_"))
+            el = soup.find("ul", {"class": "a-pagination"})
+            #el = el.find("li", {"class": "a-last"})
+            els = el.findAll("li", {"class": re.compile("^a-")})
+            #pout.v(len(els))
+            #pout.v(els[-2])
+            el = els[-2]
+            if len(el.contents) and len(el.contents[0].contents):
+                page = int(el.contents[0].contents[0].strip())
+
+        except AttributeError:
+            raise ParseError("Could not find pagination, is this a wishlist page?")
+
+        return page
+
+    def get_wishlist_url(self, name, page):
+        base_url = "{}/gp/registry/wishlist/{}".format(self.host, name)
+        if page > 1:
+            base_url += "?page={}".format(page)
+        return base_url
+
+    def get(self, name, page=0):
+        """return the items of the given wishlist name"""
+        crash_count = 0
+        page = page if page > 1 else 1
+        self.current_page = page
+
+        soup = None
+        page_count = None
+
+        with self.open_simple() as b:
+            while True:
+                try:
+                    # https://www.amazon.com/gp/registry/wishlist/NAME
+                    b.location(self.get_wishlist_url(name, page))
+                    self.current_url = b.current_url
+                    soup = self.soupify(b.body)
+
+                    if page_count is None:
+                        page_count = self.get_total_pages_from_body(soup)
+
+                    for i, item in enumerate(self.get_items_from_body(soup)):
+                        yield item
+
+                except Exception as e:
+                    logger.exception(e)
+                    raise
+
+                finally:
+                    page += 1
+                    if page_count is None or page > page_count:
+                        break
+
+                    self.current_page = page
+                    soup = None
+
