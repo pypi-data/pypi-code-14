@@ -1,0 +1,28 @@
+import click
+
+from globus_cli.safeio import safeprint
+from globus_cli.parsing import common_options
+from globus_cli.helpers import outformat_is_json, print_json_response
+
+from globus_cli.services.transfer.helpers import get_client
+from globus_cli.services.transfer.activation import autoactivate
+
+
+@click.command('mkdir', help='Make a directory on an Endpoint')
+@common_options
+@click.option('--endpoint-id', required=True, help='ID of the Endpoint')
+@click.option('--path', required=True,
+              help='Path on the remote Endpoint to create')
+def mkdir_command(path, endpoint_id):
+    """
+    Executor for `globus transfer mkdir`
+    """
+    client = get_client()
+    autoactivate(client, endpoint_id, if_expires_in=60)
+
+    res = client.operation_mkdir(endpoint_id, path=path)
+
+    if outformat_is_json():
+        print_json_response(res)
+    else:
+        safeprint(res['message'])
