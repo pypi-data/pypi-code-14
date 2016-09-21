@@ -1,0 +1,8 @@
+__title__ = 'stripe-django'
+__package_name__ = 'stripe_django'
+__version__ = '0.1'
+__description__ = 'tmux session manager'
+__email__ = 'tony@git-pull.com'
+__author__ = 'Tony Narlock'
+__license__ = 'BSD'
+__copyright__ = 'Copyright 2015-2016 Tony Narlock'
