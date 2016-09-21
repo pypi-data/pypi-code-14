@@ -1,0 +1,32 @@
+import cf
+import datetime
+import numpy
+import os
+import time 
+import unittest
+
+class CoordinateTest(unittest.TestCase):
+    filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            'test_file.nc')
+    chunk_sizes = (17, 34, 300, 100000)[::-1]
+
+    def test_convert_reference_time(self):
+        c = cf.DimensionCoordinate(data=cf.Data([1, 3], 'months since 2000-1-1'),
+                                   bounds=cf.Data([[0, 2], [2, 4]]))
+        self.assertTrue((c.dtarray == numpy.array([datetime.datetime(2000, 1, 31, 10, 29, 3, 831197),
+                                                   datetime.datetime(2000, 4, 1, 7, 27, 11, 493645)])).all())
+        c.convert_reference_time(calendar_months=True, i=True)
+        self.assertTrue((c.dtarray == numpy.array([datetime.datetime(2000, 2, 1, 0, 0),
+                                                   datetime.datetime(2000, 4, 1, 0, 0)])).all())
+        self.assertTrue((c.bounds.dtarray == numpy.array([[datetime.datetime(2000, 1, 1, 0, 0),
+                                                           datetime.datetime(2000, 3, 1, 0, 0)],
+                                                          [datetime.datetime(2000, 3, 1, 0, 0),
+                                                           datetime.datetime(2000, 5, 1, 0, 0)]])).all())
+    #--- End: def
+
+#--- End: class
+
+if __name__ == "__main__":
+    print cf.ENVIRONMENT()
+    print ''
+    unittest.main(verbosity=2)
