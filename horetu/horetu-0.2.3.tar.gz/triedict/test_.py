@@ -1,0 +1,62 @@
+import pytest
+from . import triedict
+
+@pytest.fixture
+def x():
+    return triedict(chain=1, chainsaw=2, calque=3, loanword=4)
+
+@pytest.fixture
+def y():
+    return triedict({
+        (1, 2): 'a',
+        (1, 2, 3): 'b',
+        (10, 11, 12, 13): 'c',
+    })
+
+_argvalues = [
+    ('aoeu', True),
+    (b'aoeu', False),
+    (1234, False),
+]
+@pytest.mark.parametrize('key, ok', _argvalues)
+def test_check_type(x, key, ok):
+    if ok:
+        x._check_type(key)
+    else:
+        with pytest.raises(TypeError):
+            x._check_type(key)
+
+def test_repr(x):
+    assert 'triedict(' in repr(x)
+    assert 'chainsaw\': 2' in repr(x)
+
+def test_getitem(x):
+    assert x['chain'] == 1
+    with pytest.raises(KeyError):
+        x['chai']
+    assert x['calque'] == 3
+    assert x['l'] == 4
+
+def test_setitem(x):
+    x['aoeu'] = 9
+    x._trie['a']['o']['e']['u'][None] == 9
+
+def test_delitem(x):
+    with pytest.raises(NotImplementedError):
+        del(x['printer'])
+
+def test_iter(x):
+    assert list(sorted(x)) == ['calque', 'chain', 'chainsaw', 'loanword']
+
+def test_len(x):
+    assert len(x) == 4
+
+def test_getitem_tuple(y):
+    assert y[(10,)] == 'c'
+
+def test_iter_tuple(y):
+    assert list(sorted(y)) == [
+        (1, 2),
+        (1, 2, 3),
+        (10, 11, 12, 13),
+    ]
