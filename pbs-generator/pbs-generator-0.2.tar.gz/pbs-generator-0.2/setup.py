@@ -1,0 +1,16 @@
+from setuptools import setup
+
+setup(
+    name='pbs-generator',
+    version='0.2',
+    install_requires=[
+        'Click'
+    ],
+    description = 'A PBS script generator',
+    author = 'Mohamad Mohebifar',
+    author_email = 'mmohebifar@mun.ca',
+    url = 'https://github.com/mohebifar/pbs-generator',
+    download_url = 'https://github.com/mohebifar/pbs-generator/tarball/0.1',
+    keywords = ['pbs-generator', 'rowley'],
+    classifiers = [],
+)
