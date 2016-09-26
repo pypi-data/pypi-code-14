@@ -1,0 +1,2 @@
+MODULE = 'Accounts'
+PRIMARY_FIELD = 'ACCOUNTID'

@@ -1,0 +1,2 @@
+MODULE = 'Potentials'
+PRIMARY_FIELD = 'POTENTIALID'
