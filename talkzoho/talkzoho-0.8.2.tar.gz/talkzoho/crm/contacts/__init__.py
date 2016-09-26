@@ -1,0 +1,2 @@
+MODULE = 'Contacts'
+PRIMARY_KEY = 'CONTACTID'
