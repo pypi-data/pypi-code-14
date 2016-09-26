@@ -1,0 +1,37 @@
+class TestResult:
+    def __init__(self):
+        pass
+
+    def is_successful(self):
+        raise NotImplementedError
+
+    def get_message(self):
+        raise NotImplementedError
+
+
+class TestResultSuccess(TestResult):
+    status = 'PASSED'
+
+    def is_successful(self):
+        return True
+
+    def get_message(self):
+        return self.status
+
+
+class TestResultFailure(TestResult):
+    status = 'FAILED'
+
+    def __init__(self, reason, exception=None):
+
+        if exception is not None:
+            self.message = str(reason) + ': ' + str(exception)
+        else:
+            self.message = reason
+
+    def is_successful(self):
+        return False
+
+    def get_message(self):
+        return self.message
+
