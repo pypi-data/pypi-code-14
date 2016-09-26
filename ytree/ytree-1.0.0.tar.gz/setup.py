@@ -1,0 +1,27 @@
+from setuptools import setup
+
+setup(name="ytree",
+      version="1.0.0",
+      description="Merger-tree for FoF, Rockstar, and consistent-trees based on yt.",
+      author="Britton Smith",
+      author_email="brittonsmith@gmail.com",
+      license="BSD",
+      keywords=["simulation", "merger-tree", "astronomy", "astrophysics"],
+      url="http://bitbucket.org/brittonsmith/ytree",
+      packages=["ytree"],
+      include_package_data=True,
+      classifiers=[
+          "Development Status :: 2 - Pre-Alpha",
+          "Environment :: Console",
+          "Intended Audience :: Science/Research",
+          "Topic :: Scientific/Engineering :: Astronomy",
+          "License :: OSI Approved :: BSD License",
+          "Operating System :: MacOS :: MacOS X",
+          "Operating System :: POSIX :: AIX",
+          "Operating System :: POSIX :: Linux",
+          "Natural Language :: English",
+          "Programming Language :: Python :: 2",
+          "Programming Language :: Python :: 2.7",
+          ],
+      install_requires=['yt', 'h5py', 'numpy', 'configparser'],
+      )
