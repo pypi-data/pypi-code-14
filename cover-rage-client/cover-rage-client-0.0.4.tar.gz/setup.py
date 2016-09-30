@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
+
+def get_version() -> str:
+    with open('VERSION', 'r') as f:
+        version_str = f.read().strip()
+    assert version_str
+    return version_str
+
+setup(
+    name='cover-rage-client',
+    version=get_version(),
+    description='Utility (client) to check coverage for the last commit / pull request while running tests on CI.',
+    long_description=open('README.rst', 'r').read(),
+    author='Alexander Ryabtsev',
+    author_email='ryabtsev.alexander@gmail.com',
+    url='https://github.com/alexryabtsev/cover_rage_client',
+    packages=['cover_rage_client'],
+    install_requires=open('requirements.txt', 'r').readlines(),
+    package_data={'': ['cover_rage_client/utils/newlines.sh', 'cover_rage_client/utils/showlinenum.awk']},
+    include_package_data=True,
+    entry_points={
+        'console_scripts': ['rage_client=cover_rage_client.client:__main__'],
+    },
+    license='MIT',
+    classifiers=(
+        b'Development Status :: 3 - Alpha',
+        b'Environment :: Console',
+        b'Intended Audience :: Developers',
+        b'License :: OSI Approved :: MIT License',
+        b'Natural Language :: English',
+        b'Operating System :: OS Independent',
+        b'Programming Language :: Python',
+        b'Programming Language :: Python :: 3.5',
+        b'Topic :: Software Development :: Testing',
+    ),
+)
