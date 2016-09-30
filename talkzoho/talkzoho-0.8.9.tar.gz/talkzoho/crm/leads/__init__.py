@@ -1,0 +1,2 @@
+MODULE = 'Leads'
+PRIMARY_KEY = 'LEADID'
