@@ -1,0 +1,28 @@
+from setuptools import setup
+
+setup(name='qtMUD',
+      version='0.0.6',
+      description='framework for building and running MUDs',
+      long_description='qtMUD is a framework for developing and hosting MUDs, '
+                       'or Multi-User Dungeons; text-based MMORPGs.',
+      classifiers=['Development Status :: 3 - Alpha',
+                   'Environment :: Console',
+                   'Intended Audience :: Developers',
+                   'Intended Audience :: Education',
+                   'License :: Freeware',
+                   'Natural Language :: English',
+                   'Operating System :: OS Independent',
+                   'Programming Language :: Python :: 3',
+                   'Topic :: Communications :: Chat',
+                   'Topic :: Games/Entertainment :: Multi-User Dungeons (MUD)',
+                   ],
+      keywords='mud mmo mmorpg game',
+      url='http://github.com/emsenn/qtmud',
+      author='emsenn',
+      author_email='morgan.sennhauser@gmail.com',
+      license='WTFPL',
+      packages=['qtmud'],
+      include_package_data=True,
+      zip_safe=False,
+      test_suite='tests',
+      scripts=['bin/qtmud_run'])
