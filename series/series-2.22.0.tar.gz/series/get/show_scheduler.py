@@ -1,0 +1,122 @@
+from datetime import datetime, timedelta
+from typing import Callable
+
+from amino import _
+
+from series.get.handler import ShowHandler, S
+from series.get.tvdb import Tvdb
+
+from series.condition import HandlerCondition, DynCondition, SimpleCondition
+from series.get.model.show import Show
+from series.get import ReleaseMonitor
+
+
+class AirsToday(HandlerCondition):
+
+    @property
+    def _today_thresh(self):
+        return datetime.now() - timedelta(hours=16)
+
+    def _check(self, show):
+        return show.next_episode_date < self._today_thresh
+
+    def ev(self, show):
+        return show.has_next_episode and self._check(show)
+
+    def describe(self, show, target):
+        match = self.ev(show)
+        good = match == target
+        today = (show.next_episode_date > self._today_thresh) and match
+        desc = ('today' if today else
+                show.next_episode_date.strftime('%F') if
+                show.next_episode_stamp > 0 else
+                'no date')
+        return 'airs today[{}]'.format(self._paint(desc, good))
+
+
+class CanCatchUp(SimpleCondition):
+    ''' *current* is the last aired episode, which includes those aired
+    within 24 hours in the future.
+    *latest* is the newest release in the db.
+    '''
+
+    def __init__(self, latest) -> None:
+        self._latest = latest
+
+    def current(self, show):
+        return show.current_episode
+
+    def latest(self, show):
+        return self._latest(show)
+
+    def ev(self, show):
+        return self.latest(show).exists(self.current(show) > _)
+
+    @property
+    def _desc(self):
+        return 'latest > watched'
+
+    def _repr(self, show, match):
+        op = '>' if match else '<'
+        def has(latest):
+            return '{} {} {}'.format(self.current(show), op, latest)
+        return self.latest(show) / has | 'no latest episode'
+
+
+class CanSchedule(DynCondition):
+    ''' If the db contains an episode for the currently airing season,
+    compare the latest db release with the currently airing episode.
+    Otherwise, check whether the current episode airs today.
+    '''
+
+    def __init__(self, latest: Callable[[Show], ReleaseMonitor]) -> None:
+        self._latest = latest
+
+    def _dyn_sub(self, show):
+        if self._latest(show).present:
+            return CanCatchUp(self._latest)
+        else:
+            return (S('has_next_episode') & AirsToday())
+
+    def describe(self, show, target):
+        s = super().describe(show, target)
+        state = 'continuing' if self._latest(show).present else 'fresh'
+        return '{} show => {}'.format(state, s)
+
+
+class ShowScheduler(ShowHandler, Tvdb):
+
+    def __init__(self, releases, shows, **kw):
+        super().__init__(shows, 60, 'show scheduler', cooldown=3600, **kw)
+        self._releases = releases
+
+    def _handle(self, show):
+        def catch_up(latest):
+            for episode in range(latest + 1, show.current_episode + 1):
+                self._schedule(show, show.current_season, episode)
+        def schedule_next():
+            self._schedule(show, show.season, show.next_episode)
+        return self._latest(show) / catch_up | schedule_next
+
+    @property
+    def _conditions(self):
+        return CanSchedule(self._latest)
+
+    def _latest(self, show):
+        return self._releases.latest_for_season(show.canonical_name,
+                                                show.current_season)
+
+    def _schedule(self, show, season, episode):
+        airdate = self.tvdb.airdate(show, season, episode)
+        msg = 'Scheduling release "{} {}x{}" on {}'.format(
+            show.name,
+            season,
+            episode,
+            airdate
+        )
+        self.log.info(msg)
+        self._releases.create(show.canonical_name, season, episode, airdate,
+                              downgrade_after=show.downgrade_after)
+        self._commit()
+
+__all__ = ['ShowScheduler']
