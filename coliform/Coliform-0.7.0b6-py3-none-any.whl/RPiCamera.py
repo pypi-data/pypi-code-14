@@ -1,0 +1,223 @@
+#!/usr/bin/env python3
+#
+# This is the Camera feature function for Coliform Project
+#
+# This file is part of Coliform. https://github.com/Regendor/coliform-project
+# (C) 2016
+#
+# Licensed under the GNU General Public License version 3.0 (GPL-3.0)
+from tkinter import *
+from tkinter import filedialog
+import time
+import picamera
+import picamera.array
+import matplotlib.pyplot as plt
+from scipy import misc
+import matplotlib.colors as colors
+import numpy as np
+import png
+from fractions import Fraction
+
+
+def takePictureDefault(iso=100, brightness=50, contrast=0, resolution=(1024,1008)):
+    with picamera.PiCamera() as camera:
+        with picamera.array.PiYUVArray(camera) as stream:
+            camera.resolution = resolution
+            camera.brightness = brightness
+            camera.contrast = contrast
+            camera.iso = iso
+            time.sleep(2)
+            camera.capture(stream, 'yuv')
+            # print(stream.array.shape)
+            # print(stream.rgb_array.shape)
+            rgb_array = stream.rgb_array
+            return rgb_array
+
+
+def takePicture(iso=100, delay=60, exposure='auto', resolution=(1024,1008), brightness=50, contrast=0, shutterspeed=0, framerate=25):
+    with picamera.PiCamera() as camera:
+        with picamera.array.PiYUVArray(camera) as stream:
+            camera.resolution = resolution
+            camera.framerate = framerate
+            camera.shutter_speed = shutterspeed
+            camera.iso = iso
+            camera.exposure_mode = exposure
+            camera.brightness = brightness
+            camera.contrast = contrast
+            camera.zoom = (0.0,0.0,1.0,1.0)
+            time.sleep(delay)
+            camera.capture(stream, 'yuv')
+            # print(stream.array.shape)
+            # print(stream.rgb_array.shape)
+            rgb_array = stream.rgb_array
+            return rgb_array
+
+
+def returnIntensity(rgb_array, color='all'):
+    red_avg = np.mean(rgb_array[..., 0].flatten())
+    green_avg = np.mean(rgb_array[..., 1].flatten())
+    blue_avg = np.mean(rgb_array[..., 2].flatten())
+    img_hsv = colors.rgb_to_hsv(rgb_array[..., :3])
+    intensity_avg = np.mean(img_hsv[..., 2].flatten())
+    if color in ['all', 'a']:
+        return red_avg, green_avg, blue_avg, intensity_avg
+    elif color in ['r', 'red']:
+        return red_avg
+    elif color in ['g', 'green']:
+        return green_avg
+    elif color in ['b', 'blue']:
+        return blue_avg
+    elif color in ['intensity', 'int']:
+        return intensity_avg
+    elif color in ['rgb', 'red, green, blue']:
+        return red_avg, green_avg, blue_avg
+    else:
+        raise ValueError("Color parameter not recognized, please type one of the following: 'a', for all colors,"
+                         " 'b' for blue, 'r' for red, 'g' for green, or 'int' for intensity")
+
+
+def showImage(rgb_array, color='true'):
+    if color == 'true':
+        misc.imshow(rgb_array)
+    if color == 'r':
+        rgb_array_red = rgb_array * 1
+        r_array = setImageColor(rgb_array_red, 'r')
+        misc.imshow(r_array)
+    if color == 'g':
+        rgb_array_green = rgb_array * 1
+        g_array = setImageColor(rgb_array_green, 'g')
+        misc.imshow(g_array)
+    if color == 'b':
+        rgb_array_blue = rgb_array * 1
+        b_array = setImageColor(rgb_array_blue, 'b')
+        misc.imshow(b_array)
+    if color == 'all':
+        misc.imsave('true.png', rgb_array)
+
+        rgb_array_red = rgb_array * 1
+        r_array = setImageColor(rgb_array_red, 'r')
+        misc.imsave('red.png', r_array)
+
+        rgb_array_green = rgb_array * 1
+        g_array = setImageColor(rgb_array_green, 'g')
+        misc.imsave('green.png', g_array)
+
+        rgb_array_blue = rgb_array * 1
+        b_array = setImageColor(rgb_array_blue, 'b')
+        misc.imsave('blue.png', b_array)
+
+        app = Tk()
+        app.title('Image Captures')
+
+        fname = Canvas(bg='black', height=600, width=1000)
+
+        trueimage = PhotoImage(file='true.png')
+        redimage = PhotoImage(file='red.png')
+        greenimage = PhotoImage(file='green.png')
+        blueimage = PhotoImage(file='blue.png')
+
+        def img1():
+            image = fname.create_image(800, 50, anchor=NE, image=trueimage)
+
+        def img2():
+            image = fname.create_image(900, 50, anchor=NE, image=redimage)
+
+        def img3():
+            image = fname.create_image(900, 50, anchor=NE, image=greenimage)
+
+        def img4():
+            image = fname.create_image(900, 50, anchor=NE, image=blueimage)
+
+        var = IntVar()
+        var.set(1)
+
+        R1 = Radiobutton(app, text='Image', variable=var, value=1, command=img1)
+        R1.grid(column=1, row=1)
+
+        R2 = Radiobutton(app, text='Red Component', variable=var, value=2, command=img2)
+        R2.grid(column=2, row=1)
+
+        R3 = Radiobutton(app, text='Green Component', variable=var, value=3, command=img3)
+        R3.grid(column=3, row=1)
+
+        R4 = Radiobutton(app, text='Blue Component', variable=var, value=4, command=img4)
+        R4.grid(column=4, row=1)
+
+        fname.pack()
+        app.mainloop()
+
+
+
+def setImageColor(rgb_array, color):
+    if color in ['b', 'blue']:
+        rgb_array[..., 0] *= 0
+        rgb_array[..., 1] *= 0
+    elif color in ['g', 'green']:
+        rgb_array[..., 0] *= 0
+        rgb_array[..., 2] *= 0
+    elif color in ['r', 'red']:
+        rgb_array[..., 1] *= 0
+        rgb_array[..., 2] *= 0
+    else:
+        raise ValueError("Output color error: You need to specify which output you want from: 'r', 'g' or 'b'")
+    return rgb_array
+
+
+def importImage():
+    image = filedialog.askopenfilename(filetypes=[('Image Files', '*.png *.jpg *.jpeg')])
+    rgb_array = misc.imread(image)
+    return rgb_array
+
+
+def saveImage(rgb_array):
+    filename = filedialog.asksaveasfilename(defaultextension='.png')
+    png.from_array(rgb_array, 'L').save(filename)
+
+
+def showPlot(rgb_array):
+    rgb_array_red = rgb_array * 1
+    rgb_array_green = rgb_array * 1
+    rgb_array_blue = rgb_array * 1
+    rgb_array_hist = rgb_array
+
+    f2 = plt.figure()
+    f2.canvas.set_window_title('RGB Plots')
+
+    lu1 = setImageColor(rgb_array_red, 'r')
+    plt.subplot2grid((2, 3), (0, 0))
+    plt.imshow(lu1)
+
+    lu2 = setImageColor(rgb_array_green, 'g')
+    plt.subplot2grid((2, 3), (0, 1))
+    plt.imshow(lu2)
+
+    lu3 = setImageColor(rgb_array_blue, 'b')
+    plt.subplot2grid((2, 3), (0, 2))
+    plt.imshow(lu3)
+
+    lu4 = rgb_array_hist[..., 0].flatten()
+    plt.subplot2grid((2, 3), (1, 0))
+    plt.hist(lu4, bins=256, range=(0, 256), histtype='stepfilled', color='r', label='Red')
+    plt.title("Red")
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
+    plt.legend()
+
+    lu5 = rgb_array_hist[..., 1].flatten()
+    plt.subplot2grid((2, 3), (1, 1))
+    plt.hist(lu5, bins=256, range=(0, 256), histtype='stepfilled', color='g', label='Green')
+    plt.title("Green")
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
+    plt.legend()
+
+    lu6 = rgb_array_hist[..., 2].flatten()
+    plt.subplot2grid((2, 3), (1, 2))
+    plt.hist(lu6, bins=256, range=(0, 256), histtype='stepfilled', color='b', label='Blue')
+    plt.title("Blue")
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
+    plt.legend()
+
+    # plt.hist((rgb_array).ravel(), bins=256, range=(0,1), fc = 'k', ec = 'k')
+    plt.show()
