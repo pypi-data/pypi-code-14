@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+"""
+TODO
+"""
+__author__ = 'heliosantos99@gmail.com (Helio Santos)'
+
+import os
+
+
+class FilesystemCrawler:
+
+    def __init__(self, matchRules):
+        self.matchRules = matchRules
+
+    def search(self, topdir, ignoreMatchedDirSubtree=True):
+        matchedPaths = []
+        for dirpath, __, filenames in os.walk(topdir, topdown=True):
+            # append directories
+            paths = [(dirpath, False)]
+
+            # append files
+            for filename in filenames:
+                paths.append((os.path.join(dirpath, filename), True))
+
+            for path, isFile in paths:
+                isMatch = False
+                for matchRule in self.matchRules:
+                    matched, polarity = matchRule.isMatch(path, isFile)
+                    isMatch = polarity if matched else isMatch
+
+                if isMatch:
+                    matchedPaths.append((path, isFile))
+                    if not isFile and ignoreMatchedDirSubtree:
+                        break
+
+        return matchedPaths
