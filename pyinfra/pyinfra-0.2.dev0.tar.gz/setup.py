@@ -1,0 +1,73 @@
+# pyinfra
+# File: setup.py
+# Desc: pyinfra package setup
+
+from setuptools import setup, find_packages
+
+INSTALL_REQUIRES = (
+    'gevent>1,<2',
+    'paramiko>1,<3',
+    'docopt<1',
+    'colorama<1',
+    'termcolor>1,<2',
+    'jinja2>2,<3',
+    'python-dateutil>2,<3',
+    'six>1,<2',
+)
+
+TEST_REQUIRES = (
+    'nose==1.3.7',
+    'jsontest==1.2',
+    'coverage==4.0.3',
+    'mock==1.3.0',
+)
+
+DEV_REQUIRES = TEST_REQUIRES + (
+    # Releasing
+    'wheel',
+
+    # Dev debugging
+    'ipdb',
+    'ipdbplugin',
+
+    # Dev docs requirements
+    'sphinx==1.3.1',
+    'sphinx-autobuild==0.5.2',
+)
+
+
+# Extract version info without importing entire pyinfra package
+version_data = {}
+with open('pyinfra/version.py') as f:
+    exec(f.read(), version_data)
+
+
+if __name__ == '__main__':
+    setup(
+        version=version_data['__version__'],
+        name='pyinfra',
+        description='Deploy stuff by diff-ing the state you want against the remote server.',
+        author='Nick / Fizzadar',
+        author_email='pointlessrambler@gmail.com',
+        license='MIT',
+        url='http://github.com/Fizzadar/pyinfra',
+        packages=find_packages(),
+        scripts=(
+            'bin/pyinfra',
+        ),
+        install_requires=INSTALL_REQUIRES,
+        extras_require={
+            'dev': DEV_REQUIRES,
+            'test': TEST_REQUIRES,
+        },
+        # classifiers=(
+        #     'Development Status :: 4 - Beta',
+        #     'Intended Audience :: Developers',
+        #     'Intended Audience :: System Administrators',
+        #     'License :: OSI Approved :: MIT License',
+        #     'Operating System :: OS Independent',
+        #     'Programming Language :: Python :: 2',
+        #     'Programming Language :: Python :: 3',
+        #     'Topic :: System :: Systems Administration',
+        # ),
+    )
