@@ -1,0 +1,226 @@
+"""Quantitative trait locus discovery."""
+
+from __future__ import absolute_import
+
+import logging
+
+from tabulate import tabulate
+
+from numpy import asarray
+from numpy import sqrt
+
+from limix_math import (economic_qs, economic_qs_linear)
+
+from ..phenotype import NormalPhenotype
+from ...tool.kinship import gower_normalization
+from ...tool.normalize import stdnorm
+
+
+class InputInfo(object):
+    def __init__(self):
+        self.background_markers_user_provided = None
+        self.nconst_background_markers = None
+        self.covariates_user_provided = None
+        self.nconst_markers = None
+        self.kinship_rank = None
+        self.candidate_nmarkers = None
+        self.phenotype_info = None
+        self.background_nmarkers = None
+
+        self.effective_X = None
+        self.effective_G = None
+        self.effective_K = None
+
+        self.S = None
+        self.Q = None
+
+    def __str__(self):
+        t = []
+        t += self.phenotype_info.get_info()
+        if self.background_markers_user_provided:
+            t.append(['Background data', 'provided via markers'])
+            t.append(['# background markers', self.background_nmarkers])
+            t.append([
+                '# const background markers', self.nconst_background_markers
+            ])
+        else:
+            t.append(['Background data', 'provided via Kinship matrix'])
+
+        t.append(['Kinship diagonal mean', self.kinship_diagonal_mean])
+
+        if self.covariates_user_provided:
+            t.append(['Covariates', 'provided by user'])
+        else:
+            t.append(['Covariates', 'a single column of ones'])
+
+        t.append(['Kinship rank', self.kinship_rank])
+        t.append(['# candidate markers', self.candidate_nmarkers])
+        return tabulate(t, tablefmt='plain')
+
+
+def genetic_preprocess(X, G, K, covariates, input_info):
+    logger = logging.getLogger(__name__)
+    logger.info("Number of candidate markers to scan: %d", X.shape[1])
+
+    input_info.candidate_nmarkers = X.shape[1]
+    input_info.nconst_markers = sum(X.std(0) == 0)
+
+    input_info.covariates_user_provided = covariates is not None
+
+    if K is not None:
+        logger.info('Covariace matrix normalization.')
+        K = asarray(K, dtype=float)
+        K = gower_normalization(K)
+
+    input_info.background_markers_user_provided = G is not None
+    if G is not None:
+        logger.info('Genetic markers normalization.')
+        G = asarray(G, dtype=float)
+        input_info.nconst_background_markers = sum(G.std(0) == 0)
+        G = stdnorm(G)
+        G /= sqrt(G.shape[1])
+        input_info.background_nmarkers = G.shape[1]
+
+    if G is None and K is None:
+        raise Exception('G, K, and QS cannot be all None.')
+
+    logger.info('Computing the economic eigen decomposition.')
+    if K is None:
+        QS = economic_qs_linear(G)
+    else:
+        QS = economic_qs(K)
+
+    Q0, Q1 = QS[0]
+    S0 = QS[1]
+
+    input_info.Q0 = Q0
+    input_info.Q1 = Q1
+    input_info.S0 = S0
+
+    input_info.kinship_rank = len(S0)
+
+    input_info.kinship_diagonal_mean = S0.sum() / Q0.shape[0]
+
+    logger.info('Genetic marker candidates normalization.')
+    X = stdnorm(X)
+
+    input_info.effective_X = X
+    input_info.effective_G = G
+    input_info.effective_K = K
+
+
+def normal_scan(y, X, G=None, K=None, covariates=None, progress=True):
+    """Association between genetic markers and phenotype for continuous traits.
+
+    Matrix `X` shall contain the genetic markers (e.g., number of minor
+    alleles) with rows and columns representing samples and genetic markers,
+    respectively.
+
+    The user must specify only one of the parameters `G` and `K` for defining
+    the genetic background.
+
+    Let :math:`N` be the sample size, :math:`S` the number of covariates,
+    :math:`P_c` the number of genetic markers to be tested, and :math:`P_b`
+    the number of genetic markers used for Kinship estimation.
+
+    Args:
+        y          (array_like): Phenotype. Dimension (:math:`N\\times 0`).
+        X          (array_like): Candidate genetic markers (or any other
+                                 type of explanatory variable) whose
+                                 association with the phenotype will be
+                                 tested. Dimension (:math:`N\\times P_c`).
+        G          (array_like): Genetic markers matrix used internally for
+                                 kinship estimation. Dimension
+                                 (:math:`N\\times P_b`).
+        K          (array_like): Kinship matrix. Dimension
+                                 (:math:`N\\times N`).
+        covariates (array_like): Covariates. Default is an offset.
+                                 Dimension (:math:`N\\times S`).
+        progress    (bool)     : Shows progress. Defaults to `True`.
+
+    Returns:
+        A :class:`lim.genetics.qtl._canonical.CanonicalLRTScan` instance.
+    """
+    logger = logging.getLogger(__name__)
+    logger.info('Normal association scan has started.')
+    y = asarray(y, dtype=float)
+
+    ii = InputInfo()
+    ii.phenotype_info = NormalPhenotype(y)
+
+    genetic_preprocess(X, G, K, covariates, ii)
+
+    from ._canonical import CanonicalLRTScan
+    lrt = CanonicalLRTScan(
+        y, ii.Q0, ii.Q1, ii.S0, covariates=covariates, progress=progress)
+    lrt.candidate_markers = ii.effective_X
+    lrt.pvalues()
+    return lrt
+
+
+def binomial_scan(nsuccesses,
+                  ntrials,
+                  X,
+                  G=None,
+                  K=None,
+                  covariates=None,
+                  progress=True):
+    """Association between genetic markers and phenotype for continuous traits.
+
+    Matrix `X` shall contain the genetic markers (e.g., number of minor
+    alleles) with rows and columns representing samples and genetic markers,
+    respectively.
+
+    The user must specify only one of the parameters `G` and `K` for defining
+    the genetic background.
+
+    Let :math:`N` be the sample size, :math:`S` the number of covariates,
+    :math:`P_c` the number of genetic markers to be tested, and :math:`P_b`
+    the number of genetic markers used for Kinship estimation.
+
+    Args:
+        nsuccesses (array_like): Phenotype described by the number of
+                                 successes, as non-negative integers.
+                                 Dimension (:math:`N\\times 0`).
+        ntrials    (array_like): Phenotype described by the number of
+                                 trials, as positive integers. Dimension
+                                 (:math:`N\\times 0`).
+        X          (array_like): Candidate genetic markers (or any other
+                                 type of explanatory variable) whose
+                                 association with the phenotype will be
+                                 tested. Dimension (:math:`N\\times P_c`).
+        G          (array_like): Genetic markers matrix used internally for
+                                 kinship estimation. Dimension
+                                 (:math:`N\\times P_b`).
+        K          (array_like): Kinship matrix. Dimension
+                                 (:math:`N\\times N`).
+        covariates (array_like): Covariates. Default is an offset.
+                                 Dimension (:math:`N\\times S`).
+        progress         (bool): Shows progress. Defaults to `True`.
+
+    Returns:
+        A :class:`lim.genetics.qtl.LikelihoodRatioTest` instance.
+    """
+
+    logger = logging.getLogger(__name__)
+    logger.info('Binomial association scan has started.')
+    nsuccesses = asarray(nsuccesses, dtype=float)
+    ntrials = asarray(ntrials, dtype=float)
+
+    ii = InputInfo()
+    ii.phenotype_info = BinomialPhenotypeInfo(nsuccesses, ntrials)
+
+    genetic_preprocess(X, G, K, covariates, ii)
+
+    # from .lrt import BinomialLRT
+    lrt = BinomialLRT(
+        nsuccesses,
+        ntrials,
+        ii.Q0,
+        ii.Q1,
+        ii.S0,
+        covariates=covariates,
+        progress=progress)
+    lrt.candidate_markers = ii.effective_X
+    lrt.pvalues()
+    return lrt
