@@ -1,0 +1,5 @@
+boto_dep='boto==2.38.0'
+s3am_dep='s3am==2.0a1.dev105'
+bd2k_python_lib_dep='bd2k-python-lib>=1.11.dev6'
+cgcloud_version='1.5.6'
+fabric_dep='Fabric==1.10.3'
