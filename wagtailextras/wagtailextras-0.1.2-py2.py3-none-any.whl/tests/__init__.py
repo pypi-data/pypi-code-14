@@ -1,0 +1,1 @@
+from .myests import MyPageTests
