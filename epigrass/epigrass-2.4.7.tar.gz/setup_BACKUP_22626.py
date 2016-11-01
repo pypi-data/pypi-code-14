@@ -1,0 +1,47 @@
+# -*- coding:utf8 -*-
+from setuptools import setup
+from Cython.Build import cythonize
+from glob import glob
+from Epigrass.__version__ import version
+
+
+demos = glob('demos/*')
+try:
+    demos.remove('demos/CVS')
+except:
+    pass
+
+setup(name='epigrass',
+      version=version,
+      author='Flavio Codeco Coelho, Claudia Torres Codeco',
+      author_email='fccoelho@gmail.com',
+      maintainer='Flavio Codeco Coelho',
+      maintainer_email='fccoelho@gmail.com',
+      url='http://epigrass.sourceforge.net',
+      description='Epidemiological Geo-Referenced Analysis and Simulation System',
+      long_description='EpiGrass is a simulator of epidemics over networks.  Its is a scientific tool created for simulations and scenario analysis in Network epidemiology.',
+      download_url='http://sourceforge.net/project/showfiles.php?group_id=128000',
+      license='GPL',
+      packages=['Epigrass'],
+<<<<<<< HEAD
+      install_requires=["numpy >= 1.2", "networkx >= 1.1", "SQLAlchemy >= 0.7", "sqlsoup", "redis >= 2.4", "requests", "cython"],
+      zip_safe = False,
+=======
+      setup_requires=['cython'],
+      install_requires=["numpy >= 1.2", "networkx >= 1.1", "SQLAlchemy >= 0.7", "sqlsoup", "redis >= 2.4", "requests", "dbfread"],
+>>>>>>> 4ea181c7d2ebacfc85c1e1088c2ca4ce4169e378
+      entry_points={
+          'console_scripts': [
+              'epirunner = Epigrass.manager:main',
+          ],
+          'gui_scripts': [
+              'epigrass = Epigrass.epigrass:main',
+              'epgeditor= Epigrass.epgeditor:main',
+              'neteditor= Epigrass.neteditor:main'
+          ]
+      },
+      ext_modules=cythonize('Epigrass/epimodels.py'),
+      include_package_data=True,
+      package_data={'': ['INSTALL', 'README', 'COPYING', 'epigrass.desktop', '*.rst', '*.tex', '*.png', '*.jpg']},
+      data_files = [('/usr/share/pixmaps',['egicon.png']),('/usr/share/doc/epigrass/demos',demos),('/usr/share/doc/epigrass/',['docs/build/latex/Epigrass.pdf']),('/usr/share/applications',['epigrass.desktop'])]
+)
