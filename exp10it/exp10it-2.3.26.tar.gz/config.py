@@ -1,0 +1,6 @@
+db_server="127.0.0.1"
+db_user="root"
+db_pass="root"
+db_name="h4cktool"
+targets_table_name="targets"
+first_targets_table_name="first_targets"
