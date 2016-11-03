@@ -1,0 +1,21 @@
+import anvil.server
+
+def send(to=[], subject=None, text=None, html=None, cc=[], bcc=[]):
+    if not anvil.is_server_side():
+        raise Exception("Only server modules can send email")
+
+    def to_list(val):
+        return [val] if isinstance(val, basestring) else val
+
+    to = to_list(to)
+    cc = to_list(cc)
+    bcc = to_list(cc)
+
+    if len(to + cc + bcc) == 0:
+        raise Exception("You must specify at least one recipient (to, cc or bcc)")
+
+    if text is None and html is None:
+        raise Exception("You must supply a message body (text or html)")
+
+    return anvil.server.call("anvil.private.google.mail.send", to=to, cc=cc, bcc=bcc, subject=subject, text=text, html=html)
+
