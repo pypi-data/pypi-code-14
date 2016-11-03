@@ -1,0 +1,1 @@
+lookup_dimensions = ["firstname", "gender", "age", "agegroup", "digitalfootprint", "images"]
