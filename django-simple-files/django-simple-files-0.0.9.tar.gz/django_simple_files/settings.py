@@ -1,0 +1,1 @@
+# -*- coding: UTF-8 -*-import osfrom django.conf import settingsSIMPLE_FILES = {    'FILE_HASH_FUN': 'MD5',    'FILE_UPLOAD_TO': 'upload/%Y%m%d',    'FILE_LOCAL_BACKUP': False,    'FILE_LOCAL_BACKUP_DIR': os.path.join(settings.BASE_DIR, 'storage/backup'),    'FILE_AUTO_HASHNAME': True}
