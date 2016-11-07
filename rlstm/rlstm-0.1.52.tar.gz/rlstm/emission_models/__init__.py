@@ -1,0 +1,2 @@
+import bernoulli_multivariate
+import diagonal_gaussian_multivariate
