@@ -1,0 +1,1 @@
+from related_google_news.related import RelatedNewsScraper
