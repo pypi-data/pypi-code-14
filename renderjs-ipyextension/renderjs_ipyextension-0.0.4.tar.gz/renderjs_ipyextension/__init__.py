@@ -1,0 +1,1 @@
+import renderjs_ipyextension.renderjs_extension
