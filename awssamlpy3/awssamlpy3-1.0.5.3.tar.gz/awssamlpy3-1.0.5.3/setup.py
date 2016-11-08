@@ -1,0 +1,16 @@
+from setuptools import setup
+ 
+setup(
+    name = 'awssamlpy3',
+    version = '1.0.5.3',
+    description = 'SAML federated API access for AWS',
+    author='Neeharika',
+    author_email='neeharika.mm@gmail.com',
+    classifiers=[
+        'Programming Language :: Python',
+        'Environment :: Console',
+    ],
+	long_description='README',
+	install_requires=['beautifulsoup4','requests','html5lib','boto','configparser'],
+	scripts=['aws-saml','aws-saml.bat']
+)
