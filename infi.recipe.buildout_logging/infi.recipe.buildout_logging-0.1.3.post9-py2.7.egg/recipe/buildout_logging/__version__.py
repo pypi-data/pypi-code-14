@@ -1,0 +1,10 @@
+__version__ = "0.1.3.post9"
+__git_commiter_name__ = "Oded Badt"
+__git_commiter_email__ = "obadt@infinidat.com"
+__git_branch__ = 'develop'
+__git_remote_tracking_branch__ = 'origin/develop'
+__git_remote_url__ = 'git@git.infinidat.com:host-opensource/infi.recipe.buildout_logging.git'
+__git_head_hash__ = '6acb4498b67b55dbd088def8ef417135b6b94c46'
+__git_head_subject__ = "Merge branch 'python3' into develop to fix tests"
+__git_head_message__ = ''
+__git_dirty_diff__ = ''
