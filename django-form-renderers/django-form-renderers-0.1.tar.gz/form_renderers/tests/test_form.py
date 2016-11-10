@@ -1,0 +1,22 @@
+from django.test import TestCase
+from django.conf import settings
+
+from django import forms
+
+
+class MyForm(forms.Form):
+    required_field = forms.CharField(required=True)
+    optional_field = forms.CharField(required=False)
+
+
+class FormTestCase(TestCase):
+
+    def test_required_attr(self):
+        """Only one field gets the required attribute"""
+        form = MyForm()
+        li = form.as_p().split("required=\"required\"")
+        self.assertEqual(len(li), 2)
+
+    def test_as_div(self):
+        form = MyForm()
+        self.failUnless("<div class=\"field\">" in form.as_div())
