@@ -1,0 +1,6 @@
+META_FILENAME = '{}_metadata.json'
+MEASUREMENT_FILENAME = '{}_measurement_{}.png'
+ALIGNMENT_FILENAME = '{}_alignment_guide.png'
+LUT_JSON_FILENAME = '{}.json'
+LUT_CUBE_FILENAME = '{}.cube'
+LUT_PNG_FILENAME = '{}.png'
