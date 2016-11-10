@@ -1,0 +1,17 @@
+def report(keyword,n=200,lang='en'):
+    
+    df = search(keyword,n,lang)
+    header_stats(header_data(df,keyword,n))
+    pretty_table(pretty_data(df,score()), "Scores")
+    pretty_table(pretty_data(df,polarity()), "Sentiment")
+    pretty_table(pretty_data(df,user()), "Users")
+    pretty_table(pretty_data(keyword_stats(df)), "Text")
+    pretty_table(pretty_data(df,various()), "Misc")
+    hist_plot(df)
+    neg_plot(df)
+    neg2_plot(df)
+    retweet_plot(df)
+    age_plot(df)
+    cooc_plot(df)
+    freq_plot(df)
+    to_html(keyword)
