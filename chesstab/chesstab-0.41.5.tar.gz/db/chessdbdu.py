@@ -1,0 +1,272 @@
+# chessdbdu.py
+# Copyright 2008 Roger Marsh
+# Licence: See LICENCE (BSD licence)
+
+"""Chess database update using custom deferred update for Berkeley DB.
+
+List of classes
+
+ChessDatabase - chess database in custom deferred update mode.
+
+List of functions
+
+chess_dbdu - import games from *.pgn files to database
+
+"""
+
+import os
+import zipfile
+
+# bsddb removed from Python 3.n
+try:
+    from bsddb3.db import (
+        DB_CREATE,
+        DB_RECOVER,
+        DB_INIT_MPOOL,
+        DB_INIT_LOCK,
+        DB_INIT_LOG,
+        DB_INIT_TXN,
+        DB_PRIVATE,
+        )
+except ImportError:
+    from bsddb.db import (
+        DB_CREATE,
+        DB_RECOVER,
+        DB_INIT_MPOOL,
+        DB_INIT_LOCK,
+        DB_INIT_LOG,
+        DB_INIT_TXN,
+        DB_PRIVATE,
+        )
+
+from basesup.dbduapi import DBduapi, DBduapiError
+from basesup.api.constants import FILEDESC
+
+from ..core.filespec import (
+    FileSpec,
+    GAMES_FILE_DEF,
+    DB_ENVIRONMENT_GIGABYTES,
+    DB_ENVIRONMENT_BYTES,
+    )
+from ..core.chessrecord import ChessDBrecordGameImport
+
+
+def chess_dbdu(
+    dbpath,
+    pgnpaths,
+    file_records,
+    reporter=lambda text, timestamp=True: None):
+    """Open database, import games and close database."""
+    cdb = ChessDatabase(dbpath, allowcreate=True)
+    importer = ChessDBrecordGameImport()
+    if cdb.open_context():
+        cdb.set_defer_update()
+        for pp in pgnpaths:
+            s = open(pp, 'r', encoding='iso-8859-1')
+            importer.import_pgn(cdb, s, pp)
+            s.close()
+        cdb.do_deferred_updates()
+        cdb.unset_defer_update()
+    cdb.close_context()
+    # There are no recoverable file full conditions for Berkeley DB (see DPT).
+    return True
+
+
+class ChessDatabase(DBduapi):
+
+    """Provide custom deferred update for a database of games of chess.
+
+    Methods added:
+
+    add_import_buttons
+    archive
+    delete_archive
+    get_archive_names
+    get_file_sizes
+    open_context_prepare_import
+    report_plans_for_estimate
+
+    Methods overridden:
+
+    None
+    
+    Methods extended:
+
+    __init__
+    
+    """
+
+    def __init__(self, DBfile, **kargs):
+        """Define chess database.
+
+        **kargs
+        allowcreate == False - remove file descriptions from FileSpec so
+        that superclass cannot create them.
+        Other arguments are passed through to superclass __init__.
+        
+        """
+        dbnames = FileSpec(**kargs)
+        environment = {'flags': (DB_CREATE |
+                                 DB_RECOVER |
+                                 DB_INIT_MPOOL |
+                                 DB_INIT_LOCK |
+                                 DB_INIT_LOG |
+                                 DB_INIT_TXN |
+                                 DB_PRIVATE),
+                       'gbytes': DB_ENVIRONMENT_GIGABYTES,
+                       'bytes': DB_ENVIRONMENT_BYTES,
+                       }
+        # Deferred update for games file only
+        for dd in list(dbnames.keys()):
+            if dd != GAMES_FILE_DEF:
+                del dbnames[dd]
+
+        if not kargs.get('allowcreate', False):
+            try:
+                for dd in dbnames:
+                    if FILEDESC in dbnames[dd]:
+                        del dbnames[dd][FILEDESC]
+            except:
+                if __name__ == '__main__':
+                    raise
+                else:
+                    raise DBduapiError('DB description invalid')
+
+        try:
+            super(ChessDatabase, self).__init__(
+                dbnames,
+                DBfile,
+                environment)
+        except DBduapiError:
+            if __name__ == '__main__':
+                raise
+            else:
+                raise DBduapiError('DB description invalid')
+    
+        self.set_defer_limit(20000)
+    
+    def open_context_prepare_import(self):
+        """Return True
+
+        No preparation actions thet need database open for Berkeley DB.
+
+        """
+        #return super(ChessDatabaseDeferred, self).open_context()
+        return True
+    
+    def get_archive_names(self, files=()):
+        """Return specified files and existing operating system files"""
+        specs = {(f, self._associate[f][f]) for f in files
+                 if self._associate[f][f] in self._main}
+        names = dict()
+        for s, n in specs:
+            v = self._main[n]
+            ns = names[os.path.join(
+                self.get_database_folder(), v.get_database_file())] = []
+            for v in self._associate[s].values():
+                ns.append(self._main[v])
+        exists = [os.path.basename(n)
+                  for n in names if os.path.exists('.'.join((n, 'zip')))]
+        return (names, exists)
+
+    def archive(self, flag=None, names=None):
+        """Write a zip backup of files containing games.
+
+        Intended to be a backup in case import fails.
+
+        """
+        if names is None:
+            return False
+        if not self.delete_archive(flag=flag, names=names):
+            return
+        if flag:
+            for n in names:
+                archiveguard = '.'.join((n, 'grd'))
+                archivefile = '.'.join((n, 'zip'))
+                c = zipfile.ZipFile(
+                    archivefile,
+                    mode='w',
+                    compression=zipfile.ZIP_DEFLATED,
+                    allowZip64=True)
+                for s in names[n]:
+                    an = os.path.join(s.get_database_file())
+                    fn = os.path.join(
+                        self.get_database_folder(), s.get_database_file())
+                    c.write(fn, arcname=an)
+                c.close()
+                c = open(archiveguard, 'wb')
+                c.close()
+        return True
+
+    def delete_archive(self, flag=None, names=None):
+        """Delete a zip backup of files containing games."""
+        if names is None:
+            return False
+        if flag:
+            not_backups = []
+            for n in names:
+                archiveguard = '.'.join((n, 'grd'))
+                archivefile = '.'.join((n, 'zip'))
+                if not os.path.exists(archivefile):
+                    try:
+                        os.remove(archiveguard)
+                    except:
+                        pass
+                    continue
+                c = zipfile.ZipFile(
+                    archivefile,
+                    mode='r',
+                    compression=zipfile.ZIP_DEFLATED,
+                    allowZip64=True)
+                namelist = c.namelist()
+                sn = {os.path.join(
+                    self.get_database_folder(), s.get_database_file())
+                      for s in names[n]}
+                extract = [e for e in namelist
+                           if os.path.join(self.get_database_folder(), e) in sn]
+                if len(extract) != len(namelist):
+                    not_backups.append(os.path.basename(archivefile))
+                    c.close()
+                    continue
+                c.close()
+                try:
+                    os.remove(archiveguard)
+                except:
+                    pass
+                try:
+                    os.remove(archivefile)
+                except:
+                    pass
+            if not_backups:
+                return
+        return True
+
+    def add_import_buttons(self, *a):
+        """Add button actions for Berkeley DB to Import dialogue.
+
+        None required.  Method exists for DPT compatibility.
+
+        """
+        pass
+
+    def get_file_sizes(self):
+        """Return an empty dictionary.
+
+        No sizes needed.  Method exists for DPT compatibility.
+
+        """
+        return dict()
+
+    def report_plans_for_estimate(self, estimates, reporter):
+        """Remind user to check estimated time to do import.
+
+        No planning needed.  Method exists for DPT compatibility.
+
+        """
+        # See comment near end of class definition Chess in relative module
+        # ..gui.chess for explanation of this change.
+        #reporter.append_text_only(''.join(
+        #    ('The expected duration of the import may make starting ',
+        #     'it now inconvenient.',
+        #     )))
+        #reporter.append_text_only('')

@@ -1,0 +1,199 @@
+# dptanalysis.py
+# Copyright 2015 Roger Marsh
+# Licence: See LICENCE (BSD licence)
+
+"""DPT interface to chess database for chess engine analysis index
+
+List of classes
+
+AnalysisDS - represent subset of position analyses that match a postion.
+
+"""
+
+from dptdb import dptapi
+
+from basesup.api.constants import USE_STR
+
+from gridsup.dpt.dptdatasource import DPTDataSource, CursorRS
+
+from ..core.filespec import (
+    VARIATION_FIELD_DEF,
+    ENGINE_FIELD_DEF,
+    ANALYSIS_FILE_DEF,
+    )
+
+
+class AnalysisDS(DPTDataSource):
+    
+    """Extend to represent chess engine analysis on file that match postion.
+
+    Methods added:
+
+    find_engine_analysis
+    find_engine_position_analysis
+    find_position_analysis
+    get_position_analysis
+    get_position_analysis_records
+
+    Methods overridden:
+
+    None
+    
+    Methods extended:
+
+    __init__
+    
+    """
+
+    def __init__(self, dbhome, dbset, dbname, newrow=None):
+        """Extend to provide placeholder for position used to select games.
+        
+        Arguments are passed through to superclass
+
+        """
+        super().__init__(dbhome, dbset, dbname, newrow=newrow)
+
+        # FEN and engine used to do analysis.
+        self.engine = None
+        self.fen = None
+
+    def find_position_analysis(self, fen):
+        """Find analysis records matching fen position."""
+        self.engine = None
+        self.fen = None
+
+        gamedb = self.dbhome.get_database(self.dbset, self.dbname)
+        # This test copes with databases unavailable while Import in progress.
+        # Proper solution awaits implementation of general gridsup support.
+        if gamedb is None:
+            return
+        analysis = gamedb.CreateRecordList()
+        if not fen:
+            self.set_recordset(analysis)
+            return
+
+        positionanalysis = gamedb.FindRecords(
+            dptapi.APIFindSpecification(
+                self.dbhome.get_dptfiles()[
+                    self.dbset]._secondary[VARIATION_FIELD_DEF],
+                dptapi.FD_EQ,
+                dptapi.APIFieldValue(fen)),
+            dptapi.FD_LOCK_SHR)
+        analysis.Place(positionanalysis)
+        gamedb.DestroyRecordSet(positionanalysis)
+
+        self.set_recordset(analysis)
+        self.fen = fen
+
+    def find_engine_analysis(self, engine):
+        """Find analysis records matching engine."""
+        self.engine = None
+        self.fen = None
+
+        gamedb = self.dbhome.get_database(self.dbset, self.dbname)
+        # This test copes with databases unavailable while Import in progress.
+        # Proper solution awaits implementation of general gridsup support.
+        if gamedb is None:
+            return
+        analysis = gamedb.CreateRecordList()
+        if not engine:
+            self.set_recordset(analysis)
+            return
+
+        positionanalysis = gamedb.FindRecords(
+            dptapi.APIFindSpecification(
+                self.dbhome.get_dptfiles()[
+                    self.dbset]._secondary[ENGINE_FIELD_DEF],
+                dptapi.FD_EQ,
+                dptapi.APIFieldValue(engine)),
+            dptapi.FD_LOCK_SHR)
+        analysis.Place(positionanalysis)
+        gamedb.DestroyRecordSet(positionanalysis)
+
+        self.set_recordset(analysis)
+        self.engine = engine
+
+    def find_engine_position_analysis(self, engine=None, fen=None):
+        """Find analysis records matching engine and fen."""
+        self.engine = None
+        self.fen = None
+
+        gamedb = self.dbhome.get_database(self.dbset, self.dbname)
+        # This test copes with databases unavailable while Import in progress.
+        # Proper solution awaits implementation of general gridsup support.
+        if gamedb is None:
+            return
+        if not engine:
+            if not fen:
+                self.set_recordset(gamedb.CreateRecordList())
+            else:
+                self.find_position_analysis(fen)
+            return
+        elif not fen:
+            self.find_engine_analysis(engine)
+            return
+
+        fenanalysis = gamedb.FindRecords(
+            dptapi.APIFindSpecification(
+                self.dbhome.get_dptfiles()[
+                    self.dbset]._secondary[VARIATION_FIELD_DEF],
+                dptapi.FD_EQ,
+                dptapi.APIFieldValue(fen)),
+            dptapi.FD_LOCK_SHR)
+        engineanalysis = gamedb.FindRecords(
+            dptapi.APIFindSpecification(
+                self.dbhome.get_dptfiles()[
+                    self.dbset]._secondary[ENGINE_FIELD_DEF],
+                dptapi.FD_EQ,
+                dptapi.APIFieldValue(engine)),
+            dptapi.FD_LOCK_SHR)
+
+        gash = gamedb.CreateRecordList()
+        gash.Place(fenanalysis)
+        gash.Remove(engineanalysis)
+        analysis = gamedb.CreateRecordList()
+        analysis.Place(fenanalysis)
+        analysis.Remove(gash)
+        gamedb.DestroyRecordSet(fenanalysis)
+        gamedb.DestroyRecordSet(engineanalysis)
+
+        self.set_recordset(analysis)
+        self.engine = engine
+        self.fen = fen
+
+    def get_position_analysis(self, fen):
+        """Get analysis matching fen position.
+
+        It is assumed merging data from all records matching fen makes sense.
+
+        """
+        self.find_position_analysis(fen)
+        dbset = self.dbhome.get_dptfiles()[self.dbset]
+        rsc = CursorRS(dbset, dbset._primary, recordset=self.recordset)
+        analysis = self.newrow().value
+        ar = self.newrow()
+        arv = ar.value
+        r = rsc.first()
+        while r:
+            ar.load_record(r)
+            analysis.scale.update(arv.scale)
+            analysis.variations.update(arv.variations)
+            r = rsc.next()
+        else:
+            analysis.position = fen
+        analysis.position = fen
+        return analysis
+
+    def get_position_analysis_records(self, fen):
+        """Return list of analysis records matching fen position."""
+        self.find_position_analysis(fen)
+        records = []
+        dbset = self.dbhome.get_dptfiles()[self.dbset]
+        rsc = CursorRS(dbset, dbset._primary, recordset=self.recordset)
+        r = rsc.first()
+        while r:
+            ar = self.newrow()
+            ar.load_record(r)
+            records.append(ar)
+            r = rsc.next()
+        return records
