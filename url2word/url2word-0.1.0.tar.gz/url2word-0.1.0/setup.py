@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+from setuptools import setup, find_packages
+
+try:
+    long_description = open("README.rst").read()
+except IOError:
+    long_description = ""
+
+setup(
+    name="url2word",
+    version="0.1.0",
+    description="A pip package",
+    license="MIT",
+    author="nil84",
+    packages=find_packages(),
+    install_requires=[],
+    long_description=long_description,
+        entry_points={
+        'console_scripts': [
+            'url2word=main',
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.5",
+    ]
+)
