@@ -1,0 +1,2 @@
+def kkk():
+    return "Success!"
