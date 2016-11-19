@@ -1,0 +1,111 @@
+from pygments.token import Keyword, Name, Operator, Text, Comment, Number, String, Punctuation, Token
+
+TOKEN_ASSIGNMENTS = {
+    'keywords': Keyword,
+    'datatypes': Keyword.Types,
+    'operator_words': Operator.Word,
+    'functions': Operator.Word,
+    'namespace': Keyword.Namespace,
+    'pseudo_types': Keyword.Pseudo
+}
+
+_keywords = [
+    'abort', 'absolute', 'access', 'action', 'add', 'admin', 'after',
+    'aggregate', 'all', 'also', 'alter', 'always', 'analyse', 'analyze',
+    'any', 'array', 'as', 'asc', 'assertion', 'assignment',
+    'asymmetric', 'at', 'attribute', 'authorization', 'backward', 'before',
+    'begin', 'between', 'bigint', 'binary', 'bit', 'boolean', 'both', 'by',
+    'cache', 'called', 'cascade', 'cascaded', 'case', 'cast', 'catalog',
+    'chain', 'char', 'character', 'characteristics', 'check', 'checkpoint',
+    'class', 'close', 'cluster', 'coalesce', 'collate', 'collation',
+    'column', 'comment', 'comments', 'commit', 'committed', 'concurrently',
+    'configuration', 'connection', 'constraint', 'constraints', 'content',
+    'continue', 'conversion', 'copy', 'cost', 'cross', 'csv',
+    'current', 'current_catalog', 'current_date', 'current_role',
+    'current_schema', 'current_time', 'current_timestamp', 'current_user',
+    'cursor', 'cycle', 'data', 'database', 'day', 'deallocate', 'dec',
+    'decimal', 'default', 'defaults', 'deferrable', 'deferred',
+    'definer', 'delete', 'delimiter', 'delimiters', 'desc', 'dictionary',
+    'disable', 'discard', 'do', 'document', 'domain', 'double',
+    'each', 'enable', 'encoding', 'encrypted',
+    'enum', 'escape', 'except', 'exclude', 'excluding', 'exclusive',
+    'execute', 'exists', 'explain', 'extension', 'external', 'extract',
+    'false', 'family', 'fetch', 'first', 'float', 'following', 'for',
+    'force', 'foreign', 'forward', 'freeze', 'from', 'full', 'function',
+    'functions', 'global', 'grant', 'granted', 'greatest', 'group',
+    'handler', 'having', 'header', 'hold', 'hour', 'identity',
+    'ilike', 'immediate', 'immutable', 'implicit', 'including',
+    'increment', 'index', 'indexes', 'inherit', 'inherits', 'initially',
+    'inline', 'inner', 'inout', 'input', 'insensitive', 'insert', 'instead',
+    'int', 'integer', 'intersect', 'interval', 'invoker', 'is',
+    'isnull', 'isolation', 'join', 'key', 'label', 'language', 'large',
+    'last', 'lc_collate', 'lc_ctype', 'leading', 'least', 'left', 'level',
+    'like', 'limit', 'listen', 'load', 'local', 'localtime',
+    'localtimestamp', 'lock', 'mapping', 'match', 'maxvalue',
+    'minute', 'minvalue', 'mode', 'month', 'move', 'name', 'names',
+    'national', 'natural', 'nchar', 'next', 'no', 'none', 'not', 'nothing',
+    'notify', 'notnull', 'nowait', 'null', 'nullif', 'nulls', 'numeric',
+    'object', 'of', 'off', 'offset', 'oids', 'on', 'only', 'operator',
+    'option', 'options', 'order', 'out', 'outer', 'over', 'overlaps',
+    'overlay', 'owned', 'owner', 'parser', 'partial', 'partition',
+    'passing', 'password', 'placing', 'plan', 'position', 'preceding',
+    'precision', 'prepare', 'prepared', 'preserve', 'primary', 'prior', 'prompt'
+    'privileges', 'procedural', 'procedure', 'quote', 'range', 'read',
+    'real', 'reassign', 'recheck', 'recursive', 'ref', 'references',
+    'reindex', 'relative', 'release', 'rename', 'repeatable', 'replace',
+    'replica', 'reset', 'restart', 'restrict', 'returning', 'returns',
+    'revoke', 'right', 'role', 'rollback', 'row', 'rows', 'rule',
+    'savepoint', 'schema', 'scroll', 'search', 'second', 'security',
+    'select', 'sequence', 'sequences', 'serializable', 'server', 'session',
+    'session_user', 'setof', 'share', 'show', 'similar', 'simple',
+    'smallint', 'some', 'stable', 'standalone', 'start', 'statement',
+    'statistics', 'stdin', 'stdout', 'storage', 'strict', 'strip',
+    'symmetric', 'sysid', 'system', 'table', 'tables',
+    'tablespace', 'temp', 'template', 'temporary', 'text', 'then', 'time',
+    'timestamp', 'to', 'trailing', 'transaction', 'treat', 'trigger',
+    'trim', 'true', 'truncate', 'trusted', 'type', 'unbounded',
+    'uncommitted', 'unencrypted', 'union', 'unique', 'unknown', 'unlisten',
+    'unlogged', 'until', 'update', 'using', 'vacuum', 'valid',
+    'validate', 'validator', 'value', 'values', 'varchar', 'variadic',
+    'varying', 'verbose', 'version', 'view', 'volatile', 'when', 'where',
+    'whitespace', 'window', 'with', 'without', 'work', 'wrapper', 'write',
+    'xml', 'xmlattributes', 'xmlconcat', 'xmlelement', 'xmlexists',
+    'xmlforest', 'xmlparse', 'xmlpi', 'xmlroot', 'xmlserialize', 'year',
+    'yes', 'zone',
+]
+
+_datatypes = [
+    'bigint', 'bigserial', 'bit', 'bit varying', 'bool', 'boolean', 'box',
+    'bytea', 'char', 'character', 'character varying', 'cidr', 'circle',
+    'decimal', 'double precision', 'float4', 'float8', 'inet',
+    'int', 'int2', 'int4', 'int8', 'integer', 'interval', 'json', 'line',
+    'lseg', 'macaddr', 'money', 'numeric', 'path', 'point', 'polygon',
+    'real', 'serial', 'serial2', 'serial4', 'serial8', 'smallint',
+    'smallserial', 'text', 'time', 'timestamp', 'timestamptz', 'timetz',
+    'tsquery', 'tsvector', 'txid_snapshot', 'uuid', 'varbit', 'varchar',
+    'with time zone', 'without time zone', 'xml',
+]
+_operator_words = [
+    'not', 'in', 'between', 'and', 'or', 'if', 'else', 'endif'
+]
+_functions = [
+    'cnvtint', 'cnvtdatetime', 'piece', 'substring'
+]
+_namespace = [
+    'drop', 'create', 'go', 'end go', 'into', 'distinct', 'declare', 'set',
+]
+_pseudo_types = [
+    'not',
+]
+
+
+def create_dictionary(t):
+    ccl_tokens = {}
+    for k, v in t:
+        if "__" not in k:
+            if k[0] == '_':
+                ccl_tokens[k[1:]] = v.replace(' ', '\s')
+    return ccl_tokens
+
+tokens = locals().items()
+CCL_TOKENS = create_dictionary(tokens)
