@@ -1,0 +1,10 @@
+from django.conf.urls import url
+
+from tf_latino.latino.views import get_adc_index, get_adc_page
+
+urlpatterns = [
+    url(r'^get-adc-index/widget(?P<widget_id>[0-9]+)/nx/Index.html$', get_adc_index, name='get adc index'),
+    url(r'^get-adc-index/widget(?P<widget_id>[0-9]+)/(?P<narrow_doc>n?)x/Index.html$', get_adc_index, name='get adc index'),
+    url(r'^get-adc-index/widget(?P<widget_id>[0-9]+)/(?P<narrow_doc>n?)x/Index(?P<document_id_from>[0-9]+)-(?P<document_id_to>[0-9]+).html$', get_adc_index, name='get adc index'),
+    url(r'^get-adc-index/widget(?P<widget_id>[0-9]+)/(?P<narrow_doc>n?)x/Document(?P<document_id>[0-9]+).html', get_adc_page, name='get adc page'),
+]
