@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2012-2016 CoNWeT Lab., Universidad Politécnica de Madrid
+
+# This file is part of Wirecloud.
+
+# Wirecloud is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# Wirecloud is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with Wirecloud.  If not, see <http://www.gnu.org/licenses/>.
+
+from setuptools import setup, find_packages
+from codecs import open
+from os import path
+
+import ckanext.wirecloudview
+
+
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the relevant file
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
+setup(
+    name='ckanext-wirecloud_view',
+    version=ckanext.wirecloudview.__version__,
+    description='Provide visualization dashboards on CKAN using WireCloud',
+    long_description=long_description,
+    url='https://github.com/conwetlab/ckanext-wirecloud_view',
+    author='CoNWeT Lab',
+    author_email='wirecloud@conwet.com',
+    license='AGPLv3+',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+    ],
+    keywords='CKAN dashboard data visualization WireCloud',
+    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
+    install_requires=['requests-oauthlib==0.5.0'],
+    include_package_data=True,
+    package_data={},
+    data_files=[],
+    entry_points='''
+        [ckan.plugins]
+        wirecloud_view=ckanext.wirecloudview.plugin:WirecloudView
+    ''',
+)
